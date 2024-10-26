@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbox with Tailwind, Voice Input, and Summary</title>
+    <!-- Import Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Import FontAwesome for microphone icon -->
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+</head>
+<body class="bg-gray-100">
+
+<div class="max-w-xl mx-auto p-5">
+    <div class="space-y-4" id="chatbox">
+        <!-- User message -->
+        <div class="col-start-1 col-end-8 p-3 rounded-lg">
+            <div class="flex flex-row items-center">
+                <div class="flex items-center justify-center h-10 w-10 rounded-full bg-blue-500 flex-shrink-0">
+                    U
+                </div>
+                <div class="relative ml-3 text-sm bg-white py-2 px-4 shadow rounded-xl">
+                    <div id="userMessage">Hello! How are you?</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bot response -->
+        <div class="col-start-1 col-end-8 p-3 rounded-lg">
+            <div class="flex flex-row items-center">
+                <div class="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0">
+                    B
+                </div>
+                <div class="relative ml-3 text-sm bg-white py-2 px-4 shadow rounded-xl">
+                    <div id="botResponse">Hey! How can I assist you today?</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input box for user to type message -->
+        <div class="flex items-center space-x-2 mt-4">
+            <input
+                type="text"
+                id="userInput"
+                placeholder="Type your message..."
+                class="w-full p-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+            />
+            <!-- Microphone icon for voice input -->
+            <button id="micButton" class="bg-gray-200 p-2 rounded-full hover:bg-gray-300">
+                <i class="fas fa-microphone"></i>
+            </button>
+            <button
+                id="sendMessage"
+                class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                onclick="sendMessage()"
+            >
+                Send
+            </button>
+        </div>
+
+        <!-- Button for summarizing all messages -->
+        <div class="flex justify-end mt-4">
+            <button
+                id="summaryButton"
+                class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+                onclick="showSummary()"
+            >
+                Summary
+            </button>
+        </div>
+
+        <!-- Summary section to display all messages -->
+        <div id="summarySection" class="hidden mt-5 p-4 bg-gray-100 rounded-lg shadow">
+            <h3 class="font-semibold mb-2">Summary:</h3>
+            <div id="summaryContent"></div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for handling message sending, voice input, and summarizing -->
+<script>
+    function sendMessage() {
+        const userInput = document.getElementById('userInput').value;
+        if (userInput === '') {
+            alert("Please enter a message.");
+            return;
+        }
+
+        // Update user's message
+        document.getElementById('userMessage').innerText = userInput;
+
+        // Simulate bot's response
+        const botResponse = "I'm a bot, how can I assist you with " + userInput + "?";
+        document.getElementById('botResponse').innerText = botResponse;
+
+        // Clear the input field
+        document.getElementById('userInput').value = '';
+    }
+
+    // Function for showing summary of all messages
+    function showSummary() {
+        const userMessage = document.getElementById('userMessage').innerText;
+        const botMessage = document.getElementById('botResponse').innerText;
+
+        // Create the summary content
+        const summaryContent = `
+            <p><strong>User:</strong> ${userMessage}</p>
+            <p><strong>Bot:</strong> ${botMessage}</p>
+        `;
+
+        // Display the summary content
+        document.getElementById('summaryContent').innerHTML = summaryContent;
+        document.getElementById('summarySection').classList.remove('hidden');
+    }
+
+    // Placeholder for voice input logic using microphone
+    document.getElementById('micButton').addEventListener('click', () => {
+        alert("Voice input is not implemented yet, but you can use Web Speech API!");
+    });
+</script>
+
+</body>
+</html>

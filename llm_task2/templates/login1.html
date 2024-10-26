@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f3f4f6;
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col items-center justify-center">
+
+    <!-- Web App Title -->
+    <h1 class="text-4xl font-bold text-gray-800 mb-10">SERGIA WEB APP</h1>
+
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-lg overflow-hidden md:flex">
+        <!-- Left: Image (Hidden on small devices) -->
+        <div class="w-1/2 h-auto hidden md:block">
+            <img src="https://placehold.co/800x/667fff/ffffff.png?text=Your+Image&font=Montserrat" alt="Placeholder Image" class="object-cover w-full h-full">
+        </div>
+
+        <!-- Right: Login Form -->
+        <div class="p-8 w-full md:w-1/2">
+            <h1 class="text-3xl font-bold mb-6 text-gray-800">Login</h1>
+            <form action="/login" method="POST">
+                <!-- Username Input -->
+                <div class="mb-4">
+                    <label for="username" class="block text-sm font-medium text-gray-600">Username</label>
+                    <input type="text" id="username" name="username" class="w-full border border-gray-300 rounded-lg py-2 px-3 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 ease-in-out" autocomplete="off" required>
+                </div>
+
+                <!-- Password Input -->
+                <div class="mb-4">
+                    <label for="password" class="block text-sm font-medium text-gray-600">Password</label>
+                    <input type="password" id="password" name="password" class="w-full border border-gray-300 rounded-lg py-2 px-3 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 ease-in-out" autocomplete="off" required>
+                </div>
+
+                <!-- Role Selection -->
+                <div class="mb-4">
+                    <label for="role" class="block text-sm font-medium text-gray-600">Login as:</label>
+                    <select id="role" name="role" class="w-full border border-gray-300 rounded-lg py-2 px-3 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 ease-in-out">
+                        <option value="pasien">Pasien</option>
+                        <option value="dokter">Dokter</option>
+                    </select>
+                </div>
+
+                <!-- Remember Me and Forgot Password -->
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="remember" name="remember" class="focus:ring-2 focus:ring-blue-500 h-4 w-4 text-blue-500 rounded">
+                        <label for="remember" class="ml-2 text-sm text-gray-600">Remember Me</label>
+                    </div>
+                    <div>
+                        <a href="#" class="text-sm text-blue-500 hover:underline">Forgot Password?</a>
+                    </div>
+                </div>
+
+                <!-- Login Button -->
+                <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg py-2 transition duration-200 ease-in-out">Login</button>
+            </form>
+
+            <!-- Sign Up Link -->
+            <div class="mt-6 text-center">
+                <span class="text-sm text-gray-600">Don’t have an account?</span>
+                <a href="#" class="text-sm text-blue-500 hover:underline ml-1">Sign up here</a>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
