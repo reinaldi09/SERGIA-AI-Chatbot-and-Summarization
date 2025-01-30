@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pemilihan Dokter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Pilih Dokter</h2>
+
+        <label for="doctorSelect" class="block text-gray-600 font-semibold mb-2">Pilih Dokter:</label>
+        <select id="doctorSelect" class="w-full border border-gray-300 rounded-lg py-2 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+            <option value="" disabled selected>Pilih Dokter</option>
+            <!-- Dokter akan dimuat dengan JavaScript -->
+        </select>
+
+        <button id="proceedButton" onclick="selectDoctor()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 ease-in-out">
+            Lanjutkan
+        </button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', loadDoctors);
+
+        async function loadDoctors() {
+            try {
+                const response = await fetch('/get_doctors');
+                const data = await response.json();
+                const doctorSelect = document.getElementById("doctorSelect");
+
+                // Iterate over the doctors object
+                Object.values(data.doctors).forEach(doctor => {
+                    const option = document.createElement('option');
+                    option.value = doctor.id;  // Ensure 'id' is present in doctor data
+                    option.textContent = doctor.name;  // Use 'name' from doctor data
+                    doctorSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error loading doctors:", error);
+            }
+        }
+
+        async function selectDoctor() {
+            const selectedDoctor = document.getElementById("doctorSelect").value;
+            console.log("Selected Doctor:", selectedDoctor);
+
+            if (!selectedDoctor) {
+                alert("Harap pilih dokter terlebih dahulu.");
+                return;
+            }
+
+            try {
+                // Save selected doctor
+                const response = await fetch('/set_doctor', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ doctor_id: selectedDoctor })
+                });
+
+                console.log("Response Status:", response.status);
+                const data = await response.json();
+
+                console.log("Response Data:", data);
+                if (data.success) {
+                    // Redirect to chatbot page
+                    window.location.href = '/home';
+                } else {
+                    alert("Error dalam memilih dokter. Coba lagi.");
+                }
+            } catch (error) {
+                console.error("Error during fetch:", error);
+                alert("Terjadi masalah saat menghubungi server. Coba lagi.");
+            }
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Doctor Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white shadow-lg rounded-lg p-8 w-full max-w-3xl">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-6 text-center">Welcome, <span class="text-blue-600">{{ doctorName }}</span>!</h2>
+
+        <!-- Patient Data Section -->
+        <div id="patientList" class="space-y-6">
+            <!-- Patient data will be loaded here dynamically -->
+        </div>
+
+        <!-- Logout Button -->
+        <form action="/logout" method="POST" class="mt-8 flex justify-center">
+            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 ease-in-out">
+                Logout
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // Get doctor name
+        const doctorName = "{{ doctorName }}";
+        const patientName = "{{ patient_name }}";
+
+        async function getPatientData() {
+            try {
+                const response = await fetch(`/get_patient_data?doctor=${doctorName}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch patient data');
+                }
+
+                const data = await response.json();
+
+                // Display patient information, summaries, and AI insights
+                const patientList = document.getElementById("patientList");
+                patientList.innerHTML = ''; // Clear any previous content
+
+                for (const [patient, details] of Object.entries(data)) {
+                    patientList.innerHTML += `
+                        <div class="border border-gray-200 p-4 rounded-lg shadow-sm">
+                            <!-- <h3 class="text-lg font-semibold text-gray-700 mb-2">Patient: ${patientName}</h3> -->
+                            <h3 class="text-lg font-semibold text-gray-700 mb-2">Patient: ${patient}</h3>
+                            <p class="text-gray-600"><strong>Summary:</strong> ${details.summary}</p>
+                            <p class="text-gray-600 mt-2"><strong>AI Insights:</strong> ${details.ai_insights || "No AI insights available."}</p>
+                            <!-- <a href="${details.pdf_file}" download class="mt-4 inline-block text-blue-500 hover:underline">Download Summary PDF</a> -->
+                            <a href="${details.pdf_file}" download class="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg inline-block transition duration-200 ease-in-out">
+                                Download Summary PDF
+                            </a>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error fetching patient data:', error);
+                const patientList = document.getElementById("patientList");
+                patientList.innerHTML = 'No patients found for this doctor.';
+            }
+        }
+        getPatientData();
+    </script>
+</body>
+</html>

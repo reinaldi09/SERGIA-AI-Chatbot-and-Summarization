@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SERGIA APP</title>
+    <!-- Import Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Import FontAwesome for microphone icon -->
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+</head>
+<body class="bg-gray-100">
+
+    <div class="max-w-xl mx-auto p-5">
+        <h1 class="text-2xl font-bold text-center mb-6">SERGIA APP</h1>
+    
+        <!-- Chatbox Area -->
+        <div id="chatbox" class="space-y-4 h-80 overflow-y-auto bg-gray-100 p-4 rounded-lg shadow-lg mb-4">
+            <!-- Initial bot message -->
+            <div class="col-start-1 col-end-8 p-3 rounded-lg">
+                <div class="flex flex-row items-center">
+                    <div class="relative ml-3 text-sm bg-white py-2 px-4 shadow rounded-xl">
+                        <div id="botInitialMessage">Halo, selamat datang di layanan chatbot kesehatan kami! Saya akan menanyakan beberapa pertanyaan terkait kesehatan Anda.</div>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- End of chatbox -->
+    
+        <!-- Input and Button Section -->
+        <div class="flex items-center space-x-2 mb-4">
+            <input
+                type="text"
+                id="userInput"
+                placeholder="Type your message..."
+                class="w-full p-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+            />
+            <button id="micButton" onclick="startSpeechToText()" class="bg-gray-200 p-2 rounded-full hover:bg-gray-300">
+                <!-- <i class="fas fa-microphone"></i> -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 14a3 3 0 003-3V5a3 3 0 00-6 0v6a3 3 0 003 3zm5-3a5 5 0 01-10 0H6a7 7 0 0014 0h-1zm-5 7a7.001 7.001 0 01-6-3.35V18a1 1 0 001 1h10a1 1 0 001-1v-1.35A7.001 7.001 0 0112 18z"/>
+                </svg>
+            </button>
+            <button
+                id="sendMessage"
+                class="ml-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                onclick="sendMessage()"
+            >
+                Kirim
+            </button>
+        </div>
+    
+        <!-- Summary Button -->
+        <div class="flex justify-end mb-4">
+            <button
+                id="summaryButton"
+                class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+                onclick="showSummary()"
+            >
+                Selesai
+            </button>
+        </div>
+    
+        <!-- Summary Section -->
+        <div id="summarySection" class="hidden mt-4 p-4 bg-gray-100 rounded-lg shadow">
+            <h3 class="font-semibold mb-2">Summary:</h3>
+            <div id="summaryContent"></div>
+        </div>
+    
+        <!-- Logout Button -->
+        <form action="/logout" method="POST" class="mt-4">
+            <button type="submit" class="w-full bg-red-500 text-white font-semibold py-2 rounded-lg hover:bg-red-600 transition duration-200">
+                Logout
+            </button>
+        </form>
+    </div>
+    
+
+<!-- JavaScript for handling message sending, voice input, and summarizing -->
+<script>
+    const chatbox = document.getElementById("chatbox");
+    const summaryBox = document.getElementById("summary");
+
+    document.addEventListener('DOMContentLoaded', sendInitialMessage);
+
+    async function sendInitialMessage() {
+        const response = await fetch('/start_chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+        const botResponse = data.chatbot_response;
+
+        // chatbox.innerHTML += `<div class="message bot text-green-700 mb-2"><strong>Bot:</strong> ${botResponse}</div>`;
+        chatbox.innerHTML += `
+            <div class="flex items-center mb-4">
+                <div class="flex items-center justify-center h-8 w-8 rounded-full bg-blue-500 text-white font-bold">B</div>
+                <div class="ml-2 bg-white text-gray-800 py-2 px-4 rounded-xl shadow-sm max-w-xs">${botResponse}</div>
+            </div>
+            `;
+        chatbox.scrollTop = chatbox.scrollHeight;
+    }
+
+    let allQuestionsAnswered = false;
+
+    async function sendMessage() {
+        if (allQuestionsAnswered) {
+            alert("All questions have been answered. No further responses are required.");
+            return;
+        }
+
+        const userInput = document.getElementById("userInput").value;
+        if (userInput === '') {
+            alert("Please enter a message.");
+            return;
+        }
+
+        // Display user's message
+        // chatbox.innerHTML += `<div class="message user text-blue-700 mb-2"><strong>User:</strong> ${userInput}</div>`;
+        
+        chatbox.innerHTML += `
+        <div class="flex justify-end items-center mb-4">
+            <div class="mr-2 bg-white text-gray-800 py-2 px-4 rounded-xl shadow-sm max-w-xs">${userInput}</div>
+            <div class="flex items-center justify-center h-8 w-8 rounded-full bg-purple-500 text-white font-bold">U</div>
+        </div>
+        `;
+        
+        document.getElementById("userInput").value = '';
+
+        const response = await fetch('/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ text: userInput })
+        });
+
+        const data = await response.json();
+        const botResponse = data.chatbot_response;
+
+        // chatbox.innerHTML += `<div class="message bot text-green-700 mb-2"><strong>Bot:</strong> ${botResponse}</div>`;
+        
+        chatbox.innerHTML += `
+        <div class="flex items-center mb-4">
+            <div class="flex items-center justify-center h-8 w-8 rounded-full bg-blue-500 text-white font-bold">B</div>
+            <div class="ml-2 bg-white text-gray-800 py-2 px-4 rounded-xl shadow-sm max-w-xs">${botResponse}</div>
+        </div>
+        `;
+        
+        chatbox.scrollTop = chatbox.scrollHeight;
+
+        if (data.all_questions_answered) {
+            allQuestionsAnswered = true;
+            disableInput();
+        }
+    }
+
+    function handleEnterKey(event) {
+        if (event.key === "Enter") {
+            sendMessage();
+        }
+    }
+
+    function startSpeechToText() {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'id-ID';
+
+        recognition.start();
+
+        recognition.onresult = function(event) {
+            const speechToText = event.results[0][0].transcript;
+            document.getElementById("userInput").value = speechToText;
+            sendMessage(speechToText);
+        };
+    }
+
+    function disableInput() {
+        document.getElementById("userInput").disabled = true;
+        document.getElementById("sendButton").disabled = true;
+    }
+
+    // Function for showing summary of all messages
+    async function showSummary() {
+        const userMessages = Array.from(chatbox.querySelectorAll('.message.user')).map(msg => msg.innerText);
+        const botMessages = Array.from(chatbox.querySelectorAll('.message.bot')).map(msg => msg.innerText);
+
+        // Create the summary content
+        const summaryContent = userMessages.map((userMessage, index) => `
+            <p><strong></strong> ${botMessages[index]}</p>
+            <p><strong></strong> ${userMessage}</p>
+        `).join("");
+
+        // Display the summary content
+        document.getElementById('summaryContent').innerHTML = summaryContent;
+        document.getElementById('summarySection').classList.remove('hidden');
+
+        try {
+            const response = await fetch('/summarize', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: "allo",
+                    doctor: "doctorName"
+                })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                // Provide a download link for the PDF
+                const downloadLink = document.createElement('a');
+                downloadLink.href = data.pdf_file; // Link to the generated PDF file
+                downloadLink.download = `${data.pdf_file}`;
+                downloadLink.textContent = 'Download PDF Summary';
+                downloadLink.classList.add("bg-blue-500", "text-white", "px-4", "py-2", "rounded-lg", "hover:bg-blue-600");
+
+                document.getElementById('summarySection').appendChild(downloadLink);
+            } else {
+                console.error("Failed to generate PDF:", data.message);
+            }
+
+            // Optionally append server-generated summary if needed
+            // document.getElementById('summaryContent').innerHTML += `
+            //     <hr>
+            //     <p><strong>Overall Summary:</strong> ${data.summary}</p>
+            // `;
+        } catch (error) {
+            console.error("Error fetching summary from server:", error);
+        }
+    }
+
+    // Placeholder for voice input logic using microphone
+    document.getElementById('micButton').addEventListener('click', startSpeechToText);
+</script>
+
+</body>
+</html>
