@@ -1,77 +1,93 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="id">
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            background-color: #f3f4f6;
-            font-family: 'Inter', sans-serif;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile JKN Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home1.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body class="h-screen flex flex-col items-center justify-center">
+<body>
 
-    <!-- Web App Title -->
-    <h1 class="text-4xl font-bold text-gray-800 mb-10">SERGIA WEB APP</h1>
-
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-lg overflow-hidden md:flex">
-        <!-- Left: Image (Hidden on small devices) -->
-        <div class="w-1/2 h-auto hidden md:block">
-            <!-- <img src="https://placehold.co/800x/667fff/ffffff.png?text=Your+Image&font=Montserrat" alt="Placeholder Image" class="object-cover w-full h-full"> -->
-            <!-- <img src="D:\Pythonproj\NLP\llm_task2\static\login_page.png" alt="Login Page Image" class="object-cover w-full h-full"> -->
-            <img src="{{url_for('static', filename='images/login_page.png')}}" alt="Placeholder Image" class="object-cover w-full h-full">
+    <div class="screen active" style="display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <img src="{{ url_for('static', filename='images/logo_mobileJKN.jpg') }}" alt="MobileJKN Logo" style="width: 100px; height: auto; margin-bottom: 10px;">
+            <h1 style="font-size: 2em; font-weight: bold; color: #4CAF50;">MobileJKN</h1>
         </div>
 
-        <!-- Right: Login Form -->
-        <div class="p-8 w-full md:w-1/2">
-            <h1 class="text-3xl font-bold mb-6 text-gray-800">Login</h1>
-            <form action="/login" method="POST">
-                <!-- Username Input -->
-                <div class="mb-4">
-                    <label for="username" class="block text-sm font-medium text-gray-600">Username</label>
-                    <input type="text" id="username" name="username" class="w-full border border-gray-300 rounded-lg py-2 px-3 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 ease-in-out" autocomplete="off" required>
-                </div>
+        <div style="width: 100%; max-width: 300px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <button id="loginBtn" style="background: linear-gradient(to right, #4CAF50, #00BCD4); color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer;">Login</button>
+                <button id="signupBtn" style="background: #f0f0f0; color: #333; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; margin-left: 10px;">Sign Up</button>
+            </div>
 
-                <!-- Password Input -->
-                <div class="mb-4">
-                    <label for="password" class="block text-sm font-medium text-gray-600">Password</label>
-                    <input type="password" id="password" name="password" class="w-full border border-gray-300 rounded-lg py-2 px-3 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 ease-in-out" autocomplete="off" required>
-                </div>
-
-                <!-- Role Selection -->
-                <div class="mb-4">
-                    <label for="role" class="block text-sm font-medium text-gray-600">Login as:</label>
-                    <select id="role" name="role" class="w-full border border-gray-300 rounded-lg py-2 px-3 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 ease-in-out">
-                        <option value="pasien">Pasien</option>
-                        <option value="dokter">Dokter</option>
-                    </select>
-                </div>
-
-                <!-- Remember Me and Forgot Password -->
-                <div class="flex justify-between items-center mb-6">
-                    <div class="flex items-center">
-                        <input type="checkbox" id="remember" name="remember" class="focus:ring-2 focus:ring-blue-500 h-4 w-4 text-blue-500 rounded">
-                        <label for="remember" class="ml-2 text-sm text-gray-600">Remember Me</label>
+            <div id="loginForm">
+                <h2 style="text-align: center; margin-bottom: 20px; color: #333;">Login</h2>
+                <form action="/login" method="POST">
+                    <!-- Username Input -->
+                    <div class="form-group">
+                        <label for="username" style="display: block; margin-bottom: 5px; color: #555;">Email</label>
+                        <input type="email" id="username" name="username" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
                     </div>
-                    <div>
-                        <a href="#" class="text-sm text-blue-500 hover:underline">Forgot Password?</a>
+
+                    <!-- Password Input -->
+                    <div class="form-group">
+                        <label for="password" style="display: block; margin-bottom: 5px; color: #555;">Password</label>
+                        <input type="password" id="password" name="password" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
                     </div>
-                </div>
 
-                <!-- Login Button -->
-                <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg py-2 transition duration-200 ease-in-out">Login</button>
-            </form>
+                    <!-- Login Button -->
+                    <button type="submit" style="width: 100%; padding: 12px; background: linear-gradient(to right, #4CAF50, #00BCD4); color: white; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; margin-top: 10px;">Login</button>
+                </form>
+            </div>
 
-            <!-- Sign Up Link -->
-            <div class="mt-6 text-center">
-                <span class="text-sm text-gray-600">Don’t have an account?</span>
-                <a href="#" class="text-sm text-blue-500 hover:underline ml-1">Sign up here</a>
+            <div id="signupForm" style="display: none;">
+                <h2 style="text-align: center; margin-bottom: 20px; color: #333;">Sign Up</h2>
+                <form action="/signup" method="POST">
+                    <!-- Email Input -->
+                    <div class="form-group">
+                        <label for="email" style="display: block; margin-bottom: 5px; color: #555;">Email</label>
+                        <input type="email" id="email" name="email" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
+                    </div>
+
+                    <!-- Name Input -->
+                    <div class="form-group">
+                        <label for="name" style="display: block; margin-bottom: 5px; color: #555;">Name</label>
+                        <input type="text" id="name" name="name" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
+                    </div>
+
+                    <!-- Password Input -->
+                    <div class="form-group">
+                        <label for="signupPassword" style="display: block; margin-bottom: 5px; color: #555;">Password</label>
+                        <input type="password" id="signupPassword" name="password" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
+                    </div>
+
+                    <!-- Signup Button -->
+                    <button type="submit" style="width: 100%; padding: 12px; background: linear-gradient(to right, #4CAF50, #00BCD4); color: white; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; margin-top: 10px;">Sign Up</button>
+                </form>
             </div>
         </div>
     </div>
+
+    <script>
+        document.getElementById('loginBtn').addEventListener('click', function() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('signupForm').style.display = 'none';
+            this.style.background = 'linear-gradient(to right, #4CAF50, #00BCD4)';
+            this.style.color = 'white';
+            document.getElementById('signupBtn').style.background = '#f0f0f0';
+            document.getElementById('signupBtn').style.color = '#333';
+        });
+
+        document.getElementById('signupBtn').addEventListener('click', function() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('signupForm').style.display = 'block';
+            this.style.background = 'linear-gradient(to right, #4CAF50, #00BCD4)';
+            this.style.color = 'white';
+            document.getElementById('loginBtn').style.background = '#f0f0f0';
+            document.getElementById('loginBtn').style.color = '#333';
+        });
+    </script>
 
 </body>
 </html>

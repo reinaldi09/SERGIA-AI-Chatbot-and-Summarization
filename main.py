@@ -1,9 +1,14 @@
+import os
+import sqlite3
+from datetime import datetime
 from transformers import pipeline, GPT2TokenizerFast, GPT2LMHeadModel
-from flask import Flask, request, jsonify, render_template, redirect, url_for, send_file, session
+from flask import Flask, request, jsonify, render_template, redirect, url_for, send_file, send_from_directory, session
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user
 from fpdf import FPDF
 import torch
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+import data
+import shutil
 
 # Initialize Flask app and login manager
 app = Flask(__name__)
@@ -11,6 +16,38 @@ app.secret_key = 'your_secret_key'
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'  # Redirect to login if not authenticated
+
+# Database functions
+def get_db():
+    db = sqlite3.connect('sergia.db')
+    db.row_factory = sqlite3.Row
+    return db
+
+def init_db():
+    with get_db() as db:
+        db.execute('''CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY,
+            email TEXT UNIQUE,
+            name TEXT,
+            password TEXT
+        )''')
+        db.execute('''CREATE TABLE IF NOT EXISTS antrean (
+            id INTEGER PRIMARY KEY,
+            user_id INTEGER,
+            faskes TEXT,
+            date TEXT,
+            poli TEXT,
+            doctor TEXT,
+            antrean_number TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )''')
+        # Insert default users if not exist
+        for username, info in data.users.items():
+            db.execute('INSERT OR IGNORE INTO users (email, name, password) VALUES (?, ?, ?)', (username + '@example.com', info['name'], info['password']))
+        db.commit()
+
+init_db()
 
 # Simulated user class for authentication
 class User(UserMixin):
@@ -26,70 +63,26 @@ class User(UserMixin):
 # generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
 
 pipe = pipeline("summarization", model="MbahLaba/Sergia_Summarization")
-gen_kwargs = {'length_penalty': 0.8, 'num_beams': 8, "max_length": 500}
-
-# Simulate conversation storage (for summarization)
-conversation_history = []
-all_questions_answered=False
-
-medical_questions = [
-    "Apa keluhan utama yang Anda rasakan?",
-    "Sejak kapan keluhan ini muncul?",
-    "Apakah ada hal yang memperburuk atau memperbaiki keluhan tersebut?",
-    "Apakah ada gejala lain yang Anda rasakan?",
-    "Apakah Anda sudah melakukan pengobatan? Jika iya, obat apa yang sudah dikonsumsi?",
-    "Apakah Anda memiliki riwayat penyakit, operasi, atau alergi terhadap obat-obatan atau makanan?",
-    "Apakah ada riwayat penyakit genetik dalam keluarga?",
-    "Apakah ada informasi tambahan yang ingin Anda sampaikan?"
-]
-question_index = 0
-
-# Dictionary untuk menyimpan data summary pasien
-summary_data = {}
-
-# Simulated user database with detailed information
-users = {
-    # Pasien Data
-    "pas1": {
-        "id": "P001",                 # Unique ID for the patient
-        "name": "John Doe",            # Full name of the patient
-        "password": "a",         # Password for login
-        "role": "pasien",              # Role: either 'pasien' or 'dokter'
-        "doctor_id": "D001"            # Associated doctor's ID (dokter in charge)
-    },
-    "pas2": {
-        "id": "P002",
-        "name": "Jane Smith",
-        "password": "a",
-        "role": "pasien",
-        "doctor_id": "D002"
-    },
-
-        "dok1": {
-            "id": "D001",
-            "name": "Dr. Siti Aisyah",
-            "password": "a",
-            "role": "dokter",
-            "patients": ["P001"]
-        },
-        "dok2": {
-            "id": "D002",
-            "name": "Dr. Bambang Hartono",
-            "password": "a",
-            "role": "dokter",
-            "patients": ["P002"]
-        }
-}
+gen_kwargs = {'length_penalty': 0.8, 'num_beams': 8, "max_length": 150}
 
 # Login manager: load user
 @login_manager.user_loader
 def load_user(user_id):
     return User(user_id)
 
-# Route for login page
-@app.route('/loginaa', methods=['GET', 'POST'])
-def loginaa():
-    return render_template('login1.html')
+# Signup route
+@app.route('/signup', methods=['POST'])
+def signup():
+    email = request.form['email']
+    name = request.form['name']
+    password = request.form['password']
+    try:
+        with get_db() as db:
+            db.execute('INSERT INTO users (email, name, password) VALUES (?, ?, ?)', (email, name, password))
+            db.commit()
+        return redirect(url_for('login'))
+    except sqlite3.IntegrityError:
+        return "Email already exists", 400
 
 # Route for login page
 @app.route('/login', methods=['GET', 'POST'])
@@ -97,38 +90,21 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        role = request.form['role']
 
-        if username in users and users[username]['password'] == password:
-            if users[username]['role'] == role:
-                # if role == "pasien":
-                #     user = User(username)
-                #     login_user(user)
-                #     session['logged_in'] = True
-                #     return render_template('choose_doctor.html')
-                # elif role == "dokter":
-                #     doctorName = session.get('selected_doctor_id')  # Mengambil doctor ID dari sesi
-                #     return render_template('doctor_page.html', doctorName=doctorName)
-
-                # Jika role adalah pasien
-                if role == "pasien":
-                    user = User(username)
-                    login_user(user)
-                    session['logged_in'] = True
-                    session['username'] = username
-                    session['doctor_id'] = users[username]['doctor_id']  # Simpan doctor_id pasien
-                    session['patient_name'] = users[username]['name']
-                    return render_template('choose_doctor1.html', doctor_id=session['doctor_id'], patient_name=session['patient_name'])
-
-                # Jika role adalah dokter
-                elif role == "dokter":
-                    doctor_id = users[username]['id']  # Ambil doctor ID dari database
-                    doctor_name = users[username]['name']  # Ambil nama dokter dari database
-                    session['doctor_id'] = doctor_id
-                    session['doctor_name'] = doctor_name
-
-                    # Tampilkan halaman dokter dengan data pasien
-                    return render_template('doctor_page1.html', doctorName=doctor_name)
+        cursor = get_db().execute('SELECT * FROM users WHERE email = ? AND password = ?', (username, password))
+        user = cursor.fetchone()
+        if user:
+            # Login
+            user_obj = User(user['id'])
+            login_user(user_obj)
+            session['logged_in'] = True
+            session['user_id'] = user['id']
+            session['username'] = user['email']
+            session['patient_name'] = user['name']
+            # For simplicity, set doctor_id to a default, or from data
+            session['doctor_id'] = 'D001'  # default
+            session['selected_doctor_id'] = 'D001'
+            return render_template('home1.html', doctor_id=session['doctor_id'], patient_name=session['patient_name'])
 
         else:
             return jsonify({"error": "Invalid credentials"}), 401
@@ -149,27 +125,12 @@ def home1():
     return redirect(url_for('login'))
     # return render_template('index4.html')
 
-# Choose_doctor route
-@app.route('/select_doctor')
-@login_required
-def select_doctor():
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-    return render_template('choose_doctor1.html')
 
-# Home route (chatbot and summarization)
-@app.route('/home')
-@login_required
-def home():
-    if not session.get('logged_in') or not session.get('selected_doctor_id'):
-        return redirect(url_for('login'))
-    return render_template('index4.html')
 
 # Chatbot route
 @app.route('/chat', methods=['POST'])
 @login_required
 def chat():
-    global question_index
     input_data = request.json
     input_text = input_data.get('text', '')
 
@@ -177,44 +138,43 @@ def chat():
         return jsonify({"error": "No input text provided"}), 400
 
     # Append user input to conversation history
-    conversation_history.append(f"User: {input_text}")
+    data.conversation_history.append(f"User: {input_text}")
 
     # Check if we have more questions to ask
-    if question_index < len(medical_questions):
-        bot_response = medical_questions[question_index]
-        question_index += 1
-        all_questions_answered = False
+    if data.question_index < len(data.medical_questions):
+        bot_response = data.medical_questions[data.question_index]
+        data.question_index += 1
+        data.all_questions_answered = False
     else:
         # If all questions are answered, end the conversation
         bot_response = "Terima kasih, jawaban Anda sudah kami terima."
-        all_questions_answered = True
+        data.all_questions_answered = True
 
-    conversation_history.append(f"Bot: {bot_response}")
+    data.conversation_history.append(f"Bot: {bot_response}")
 
     # Return the bot response (the medical question)
     return jsonify({"chatbot_response": bot_response,
-                    "all_questions_answered": all_questions_answered})
+                    "all_questions_answered": data.all_questions_answered})
 
 # Inisialisasi chat
 @app.route('/start_chat', methods=['POST'])
 @login_required
 def start_chat():
-    global question_index
-    question_index = 0  # Reset indeks pertanyaan untuk memulai percakapan baru
+    data.question_index = 0  # Reset indeks pertanyaan untuk memulai percakapan baru
 
     # Sapaan awal dari bot
     # greeting_message = "Halo, selamat datang di layanan chatbot kesehatan kami! Saya akan menanyakan beberapa pertanyaan terkait kesehatan Anda."
     greeting_message = " "
 
     # Ambil pertanyaan pertama dari daftar
-    first_question = medical_questions[question_index]
-    question_index += 1
+    first_question = data.medical_questions[data.question_index]
+    data.question_index += 1
 
     # Gabungkan sapaan dan pertanyaan pertama
     initial_message = f"{greeting_message} {first_question}"
 
     # Simpan dalam riwayat percakapan
-    conversation_history.append(f"Bot: {initial_message}")
+    data.conversation_history.append(f"Bot: {initial_message}")
 
     # Kembalikan sapaan dan pertanyaan pertama ke frontend
     return jsonify({"chatbot_response": initial_message})
@@ -229,140 +189,133 @@ def summarize():
         return jsonify({"error": "No input data received"}), 400
     print("Received input data:", input_data)
 
-    # patientUsername = input_data.get('username')
-    # patientUsername = 'bambang'
     patientUsername = session.get('username')
-    # doctorName = input_data.get('doctor')
-    doctorName = session.get('selected_doctor_id')
+    patient_name = session.get('patient_name')
+    doctor_id = session.get('selected_doctor_id')
+    doctor_name = next((info['name'] for info in data.users.values() if info.get('id') == doctor_id), doctor_id)
+
+    # Get antrean data
+    faskes = poli = appointment_date = "N/A"
+    with get_db() as db:
+        row = db.execute('SELECT * FROM antrean WHERE user_id = ? ORDER BY id DESC LIMIT 1', (session.get('user_id'),)).fetchone()
+        if row:
+            faskes = row['faskes']
+            poli = row['poli']
+            appointment_date = row['date']
+            doctor_full = row['doctor']
+            # Use the full doctor name from antrean
+            doctor_name = doctor_full
 
     # print(f"Summarizing for patient: {patientUsername}, doctor: {doctorName}")  # Tambahkan log
 
-    if not conversation_history:
+    if not data.conversation_history:
         return jsonify({"summary": "No conversation to summarize!"})
 
-    summary_input = " ".join(conversation_history)
+    summary_input = " ".join(data.conversation_history)
     # summary = generator(summary_input, max_new_tokens=50, num_return_sequences=1)[0]["generated_text"]
 
     print(f"SI : {summary_input}")
-    print(f"CH : {conversation_history}")
+    print(f"CH : {data.conversation_history}")
 
+    # Use the LLM model for summarization
     summary = pipe(summary_input, **gen_kwargs)
     print(summary[0]['summary_text'])
 
-    # Simpan summary ke dalam data
-    pdf_file_path = r"D:\Pythonproj\NLP\llm_task\static\{patient_username}_summary.pdf"
-    summary_data[patientUsername] = {
-        'doctor': doctorName,
-        'summary': summary[0]['summary_text'],
-        'pdf_file': pdf_file_path  # Anda mungkin perlu menyimpan path file
-    }
-
-    # print("Summary Data:", summary_data[patientUsername])
-
-    # print(f"Doctor for {patientUsername}: {summary_data[patientUsername]['doctor']}")
-
-    return jsonify({"summary": summary[0]['summary_text'], "pdf_file": pdf_file_path}), 200
-
-
-@app.route('/generate_pdf', methods=['POST'])
-@login_required
-def generate_pdf():
-    summary = request.json.get('summary', '')
-
+    # Generate PDF
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font('Arial', 'B', 12)
-    pdf.cell(0, 10, 'Rangkuman Kesehatan Pengguna', ln=True)
-    pdf.set_font('Arial', '', 12)
-    pdf.multi_cell(0, 10, summary)
+    pdf.set_font('Arial', 'B', 16)
+    pdf.cell(0, 10, 'Laporan Anamnesis Pasien', ln=True, align='C')
+    pdf.ln(10)
 
-    # Simpan PDF
-    pdf_file_path = os.path.join("static", f"{patient_username}_summary.pdf")
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 10, f'Pasien: {patient_name}', ln=True)
+    pdf.cell(0, 10, f'Dokter: {doctor_name}', ln=True)
+    pdf.cell(0, 10, f'Faskes: {faskes}', ln=True)
+    pdf.cell(0, 10, f'Poli: {poli}', ln=True)
+    pdf.cell(0, 10, f'Tanggal Kunjungan: {appointment_date}', ln=True)
+    pdf.cell(0, 10, f'Waktu Pembuatan Laporan: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}', ln=True)
+    pdf.ln(10)
+
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 10, 'Riwayat Percakapan:', ln=True)
+    pdf.set_font('Arial', '', 10)
+    for line in data.conversation_history:
+        pdf.multi_cell(0, 8, line)
+    pdf.ln(10)
+
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 10, 'Ringkasan Anamnesis:', ln=True)
+    pdf.set_font('Arial', '', 12)
+    pdf.multi_cell(0, 10, summary[0]['summary_text'])
+
+    pdf_file_path = os.path.join("clinic_summaries", f"{patientUsername}_summary.pdf")
+    os.makedirs("clinic_summaries", exist_ok=True)
     pdf.output(pdf_file_path)
 
-    return jsonify({"message": "PDF berhasil dihasilkan", "pdf_file": f"/static/{patient_username}_summary.pdf"})
+    # Simpan summary ke dalam data
+    data.summary_data[patientUsername] = {
+        'doctor': doctor_id,
+        'summary': summary[0]['summary_text'],
+        'pdf_file': pdf_file_path
+    }
 
+    print(f"PDF summary for patient {patientUsername} saved to clinic system at {pdf_file_path}")
+    print("PDF Content:")
+    print(f"Patient: {patient_name}")
+    print(f"Doctor: {doctor_name}")
+    print(f"Faskes: {faskes}")
+    print(f"Poli: {poli}")
+    print(f"Tanggal Kunjungan: {appointment_date}")
+    print(f"Waktu Pembuatan Laporan: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("Conversation History:")
+    for line in data.conversation_history:
+        print(line)
+    print("Summary:")
+    print(summary[0]['summary_text'])
+
+    return jsonify({"summary": summary[0]['summary_text'], "pdf_file": f"/clinic_summaries/{patientUsername}_summary.pdf", "message": "Summary generated and sent to clinic system."}), 200
+
+# Save antrean data
+@app.route('/save_antrean', methods=['POST'])
+@login_required
+def save_antrean():
+    faskes = request.form['faskes']
+    date = request.form['date']
+    poli = request.form['poli']
+    doctor = request.form['doctor']
+    user_id = session.get('user_id')
+
+    # Generate antrean_number: doctor_code + count (simplified)
+    doctor_code = doctor.split(' - ')[0][:3].upper()
+    with get_db() as db:
+        cursor = db.execute('SELECT COUNT(*) as count FROM antrean WHERE doctor = ?', (doctor,))
+        count = cursor.fetchone()['count'] + 1
+        antrean_number = f"{doctor_code}{count:03d}"
+        db.execute('INSERT INTO antrean (user_id, faskes, date, poli, doctor, antrean_number) VALUES (?, ?, ?, ?, ?, ?)', (user_id, faskes, date, poli, doctor, antrean_number))
+        db.commit()
+
+    return jsonify({'antrean_number': antrean_number})
 
 @app.route('/get_patient_data', methods=['GET', 'POST'])
 def get_patient_data():
-    # doctorName = request.args.get('doctor')
-
-    # Cek isi summary_data
-    print("Current summary_data:", summary_data)  # Tambahkan log untuk memeriksa isi data
-
     doctorName = session.get('selected_doctor_id')
     doctorsession_now = session.get('doctor_id')
 
     if doctorName == doctorsession_now:
-        patients_for_doctor = {patient: data for patient, data in summary_data.items() if data['doctor'] == doctorName}
+        with get_db() as db:
+            rows = db.execute('SELECT * FROM antrean WHERE doctor = ?', (doctorName,)).fetchall()
+            patients_for_doctor = {row['id']: dict(row) for row in rows}
         print(f"Patients found: {patients_for_doctor}")
         return jsonify(patients_for_doctor), 200
 
     else:
         return jsonify({"message": "No patients found for this doctor."}), 404
 
-# Serve the PDF file for download
-# @app.route('/download_pdf')
-# @login_required
-# def download_pdf():
-#     pdf_file = "conversation_summary.pdf"
-#     if os.path.exists(pdf_file):
-#         return send_file(pdf_file, as_attachment=True)
-#     else:
-#         return jsonify({"error": "PDF file not found."}), 404
-
-@app.route('/download_pdf', methods=['GET'])
+@app.route('/clinic_summaries/<filename>')
 @login_required
-def download_pdf():
-    try:
-        # Path ke file PDF yang sudah dibuat
-        pdf_file_path = r"D:\Pythonproj\NLP\llm_task\static\{patient_username}_summary.pdf"
-
-        # Kirim file PDF ke pengguna
-        return send_file(pdf_file_path, as_attachment=True)
-    except Exception as e:
-        return str(e), 404
-
-# ========================================================================================Doctor Back-end========================================================================================
-
-@app.route('/get_doctors', methods=['GET'])
-def get_doctors():
-    # Ambil hanya data yang role-nya "dokter"
-    doctor_data = {username: info for username, info in users.items() if info.get('role') == 'dokter'}
-
-    # Kembalikan data dokter dalam bentuk JSON
-    return jsonify({"doctors": doctor_data})
-
-@app.route('/check_session', methods=['GET'])
-def check_session():
-    # Cek apakah dokter sudah dipilih
-    selected_doctor_id = session.get('selected_doctor_id', None)
-    selected_doctor_name = session.get('selected_doctor_name', None)
-
-    if selected_doctor_id:
-        return jsonify({"doctor_id": selected_doctor_id, "doctor_name": selected_doctor_name})
-
-    else:
-        return jsonify({"error": "No doctor selected in session"})
-
-
-@app.route('/set_doctor', methods=['POST'])
-def set_doctor():
-    input_data = request.json
-    print("Received data:", input_data)  # Logging received data
-
-    selected_doctor_id = input_data.get('doctor_id')
-
-    if not selected_doctor_id:
-        return jsonify({"error": "Doctor ID is missing"}), 400
-
-    # Log doctor ID
-    print("Doctor ID:", selected_doctor_id)
-
-    # Simpan dokter yang dipilih dalam sesi
-    session['selected_doctor_id'] = selected_doctor_id
-
-    return jsonify({"success": True, "doctor_id": selected_doctor_id})
+def serve_clinic_file(filename):
+    return send_from_directory('clinic_summaries', filename)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

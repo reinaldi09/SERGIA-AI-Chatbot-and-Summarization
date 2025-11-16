@@ -1,0 +1,5 @@
+flask_login
+transformers
+flask
+fpdf
+torch
