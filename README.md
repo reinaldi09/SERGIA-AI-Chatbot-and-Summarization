@@ -1,65 +1,110 @@
-# SERGIA: AI Chatbot and Summarization
+# SERGIA: AI-Powered Anamnesis and Summarization for JKN
 
 ## Description
 
-SERGIA is an AI-powered chatbot designed to assist patients during their waiting time before consulting a doctor. It uses a fine-tuned **IndoBERT** model from Hugging Face, trained on a custom dataset, to provide summarization of patient concerns. This allows doctors to access pre-consultation summaries, making the consultation process more efficient and effective.
-
-
-## Introduction
-
-SERGIA leverages the power of **IndoBERT**, a state-of-the-art language model for Indonesian, to create an AI chatbot capable of summarizing patient concerns. The chatbot is designed to improve the efficiency of healthcare consultations by providing doctors with summarized patient data before the consultation begins.
+SERGIA (Sistem Ringkas Rekam Medis Otomatis Berbasis Generative AI) is a comprehensive web application that integrates with the Indonesian National Health Insurance (JKN) system. It provides a mobile-friendly interface for patients to register for appointments, undergo AI-driven anamnesis (pre-consultation questioning), and generate automated medical summaries. The system simulates sending data to clinic/hospital internal systems for efficient healthcare delivery.
 
 ## Features
 
-- **AI Chatbot:** Engages with patients to collect their concerns and symptoms.
-- **Summarization:** Generates concise summaries of patient inputs for doctors.
-- **IndoBERT Model:** Utilizes a fine-tuned version of the IndoBERT model from Hugging Face.
-- **Custom Dataset:** Trained on a dataset tailored for healthcare consultations.
-- **Efficiency:** Reduces consultation time by providing pre-consultation summaries.
+- **Mobile JKN Interface:** Responsive mobile app simulation for JKN services, including appointment booking.
+- **AI Anamnesis Chatbot:** Interactive chatbot that asks patients 8 standardized medical questions in Indonesian.
+- **Automated Summarization:** Generates concise medical summaries using AI models (with fallback to simple text processing).
+- **PDF Report Generation:** Creates professional PDF reports including patient details, conversation history, and summaries.
+- **Clinic Integration Simulation:** Saves reports to a dedicated folder and logs data transmission to clinic systems.
+- **User Authentication:** Secure login system with role-based access (patients and doctors).
+- **Database Integration:** Uses SQLite for storing user data, appointments, and summaries.
+- **Voice Input Support:** Includes microphone functionality for voice-to-text input.
 
-## Dataset
+## Project Structure
 
-The dataset used for training the SERGIA chatbot consists of patient-doctor interactions, including patient concerns and corresponding summaries. The dataset is structured as follows:
+```
+SERGIA-AI-Chatbot-and-Summarization/
+├── main.py                 # Flask application entry point
+├── data.py                 # Data models and constants
+├── sergia.db               # SQLite database
+├── requirements.txt        # Python dependencies
+├── clinic_summaries/       # Folder for generated PDF reports
+├── static/
+│   ├── css/
+│   │   └── home1.css       # Styles for mobile interface
+│   ├── js/
+│   │   └── home1.js        # JavaScript for mobile interface
+│   └── images/             # Static images (logos, etc.)
+├── templates/
+│   ├── login1.html         # Login page
+│   ├── home1.html          # Main mobile JKN interface
+│   └── index4.html         # Standalone chatbot interface
+└── README.md
+```
 
-- **Patient Inputs:** Textual data containing patient concerns and symptoms.
-- **Summaries:** Concise summaries of the patient inputs, created for doctor reference.
+## Installation
 
-Dataset download :
-https://huggingface.co/datasets/Bilal-Mamji/Medical-summary
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd SERGIA-AI-Chatbot-and-Summarization
+   ```
 
-### Creating the Dataset
+2. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-1. **Collecting Data:**
-   - Gather patient-doctor interaction data from healthcare providers.
-   - Anonymize the data to ensure patient privacy.
+3. **Run the application:**
+   ```bash
+   python main.py
+   ```
 
-2. **Preprocessing:**
-   - Clean and preprocess the text data (e.g., remove special characters, normalize text).
-   - Split the data into training, validation, and test sets.
+4. **Access the app:**
+   Open your browser and go to `http://localhost:5000`
 
-3. **Annotation:**
-   - Annotate the data to create summaries for each patient input.
+## Usage
 
-## Model Architecture
+### For Patients:
+1. **Login:** Use patient credentials (e.g., username: pas1, password: a)
+2. **Book Appointment:** Select "Ambil Antrean" and choose facility type
+3. **Fill Details:** Enter facility, date, department, and doctor
+4. **Anamnesis:** Answer 8 AI-guided questions about symptoms and medical history
+5. **Generate Summary:** Click "Selesai" to create PDF summary and send to clinic system
 
-The SERGIA chatbot is built using the **IndoBERT** model, which is fine-tuned on the custom dataset. The architecture includes:
+### For Doctors:
+1. **Login:** Use doctor credentials (e.g., username: dok1, password: a)
+2. **View Patients:** Access patient summaries (simulated in current version)
 
-- **Input Layer:** Accepts patient input text.
-- **IndoBERT Encoder:** Processes the input text to generate contextual embeddings.
-- **Summarization Head:** A fine-tuned layer that generates concise summaries from the embeddings.
+## Key Components
 
-Model Architecture download :
-https://huggingface.co/MbahLaba/Sergia_Summarization
+### AI Summarization
+- Uses Hugging Face transformers for text summarization
+- Fallback to simple text processing if model unavailable
+- Generates Indonesian medical summaries
 
-## Results
-The fine-tuned IndoBERT model achieves high accuracy in generating patient summaries. Detailed results, including ROUGE scores and error analysis, will be documented here after training and evaluation.
+### Database Schema
+- **users:** Stores patient and doctor information
+- **antrean:** Records appointment bookings with queue numbers
+
+### API Endpoints
+- `/login`: User authentication
+- `/chat`: Chatbot interaction
+- `/summarize`: Generate summary and PDF
+- `/save_antrean`: Save appointment data
+- `/clinic_summaries/<filename>`: Serve PDF reports
+
+## Technology Stack
+
+- **Backend:** Flask (Python)
+- **Database:** SQLite
+- **AI/ML:** Transformers, Torch
+- **Frontend:** HTML, CSS, JavaScript, Tailwind CSS
+- **PDF Generation:** FPDF
 
 ## Contributing
-Contributions are welcome! If you'd like to contribute to this project, please follow these steps:
-1. Fork the repository.
-2. Create a new branch for your feature or bug fix.
-3. Submit a pull request with a detailed description of your changes.
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
 ## License
-This project is licensed under the MIT License. See the LICENSE file for details.
+
+This project is licensed under the MIT License. See LICENSE file for details.
 
