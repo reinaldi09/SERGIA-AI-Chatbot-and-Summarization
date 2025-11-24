@@ -15,6 +15,10 @@ SERGIA (Sistem Ringkas Rekam Medis Otomatis Berbasis Generative AI) is a compreh
 - **Database Integration:** Uses SQLite for storing user data, appointments, and summaries.
 - **Voice Input Support:** Includes microphone functionality for voice-to-text input.
 
+## Demo Video
+
+https://github.com/user-attachments/assets/65f68305-028b-411b-8545-0d3c4abe5770
+
 ## Project Structure
 
 ```
